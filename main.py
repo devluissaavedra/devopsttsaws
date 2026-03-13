@@ -1,7 +1,8 @@
 from app.server import start
 
 
-def main():
+def main() -> None:
+    print("iniciando desde el main")
     start()
 
 

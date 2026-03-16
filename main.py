@@ -1,10 +1,8 @@
-from app.server import start
+import uvicorn
+from app.server import app
 
-
-def main() -> None:
-    print("iniciando desde el main")
-    start()
-
+def main():
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 if __name__ == "__main__":
     main()

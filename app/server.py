@@ -1,2 +1,7 @@
-def start():
-    print("Hola Mundo Desde el server")
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

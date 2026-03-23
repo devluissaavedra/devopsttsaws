@@ -1,39 +1,36 @@
-import boto3
-import uuid
-from concurrent.futures import ThreadPoolExecutor
+import logging
 from typing import List
+from concurrent.futures import ThreadPoolExecutor
+from services.single_tts_service import process_single_tts
 
-# Inicializar clientes de AWS
-polly = boto3.client('polly', region_name=settings.AWS_REGION)
-s3 = boto3.client('s3', region_name=settings.AWS_REGION)
+# Configuración de logging profesional
+logger = logging.getLogger(__name__)
 
-def process_single_tts(text: str, voice: str, format: str) -> str:
-    response = polly.synthesize_speech(
-        Text=text,
-        OutputFormat=format,
-        VoiceId=voice
-    )
+def process_tts(texts: List[str], voice: str, format: str, folder_path: str) -> bool:
+    """
+    Orquesta la conversión de texto a voz de forma paralela.
     
-    # Generar un nombre único para el archivo
-    filename = f"audio/{uuid.uuid4()}.{format}"
+    Mapeo directo sobre el pool de hilos para procesar la lista 
+    de textos de manera concurrente.
+    """
     
-    #Guardar en S3
-    s3.put_object(
-        Bucket=settings.S3_BUCKET_NAME,
-        Key=filename,
-        Body=response['AudioStream'].read(),
-        ContentType=f"audio/{format}"
-    )
-    
-    # Retornar la URL pública o el path
-    return f"https://{settings.S3_BUCKET_NAME}.s3.amazonaws.com/{filename}"
-
-
-def analyze_and_process(texts: List[str], voice: str, format: str):
-
+    # Se define el pool de hilos para ejecución paralela
     with ThreadPoolExecutor(max_workers=5) as executor:
-        results = list(executor.map(
-            lambda t: process_single_tts(t, voice, format), 
-            texts
-        ))
-    return results
+        try:
+            results = executor.map(
+                lambda t: process_single_tts(t, voice, format, folder_path), 
+                texts
+            )
+            
+            success = all(results)
+
+        except Exception as exc:
+            logger.error(f"Error crítico en la orquestación del proyecto {folder_path}: {exc}")
+            success = False
+
+    if success:
+        logger.info(f"Lote finalizado exitosamente en: {folder_path}")
+    else:
+        logger.warning(f"El lote en {folder_path} finalizó con errores parciales.")
+
+    return success

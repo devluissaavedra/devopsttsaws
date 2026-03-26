@@ -1,21 +1,21 @@
-from fastapi import FastAPI
+import uuid
+from fastapi import FastAPI, BackgroundTasks
 from schemas.schemas import TTSRequest
 from services.tts_service import process_tts
-from fastapi import BackgroundTasks
+from config import settings
 
-app = FastAPI()
+app = FastAPI(title="DevOps TTS API")
 
 @app.get("/health")
 def health():
     return {"ok"}
 
-@app.post("/tts")
-def tts(request: TTSRequest, background_tasks: BackgroundTasks):
-    # Se crea la carpeta de destino de los archivos.
+@app.post("/tts", status_code=202) # 202 significa "Accepted" (proceso en curso)
+async def tts(request: TTSRequest, background_tasks: BackgroundTasks):
+    # Se genera un ID de proyecto único
     project_id = str(uuid.uuid4())
     folder_path = f"audios/{project_id}/"
 
-    # Se manda el proceso pesado al fondo
     background_tasks.add_task(
         process_tts, 
         request.texts, 
@@ -24,12 +24,12 @@ def tts(request: TTSRequest, background_tasks: BackgroundTasks):
         folder_path
     )
 
-    # Se responde 
     return {
-        "message": "Processing started",
-        "project_folder": f"https://{settings.S3_BUCKET_NAME}.s3.amazonaws.com/{folder_path}",
+        "status": "processing",
+        "project_id": project_id,
+        "s3_url": f"https://{settings.S3_BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{folder_path}",
         "details": {
-            "count": len(request.texts),
-            "voice_used": request.voice
+            "chunks": len(request.texts),
+            "voice": request.voice
         }
     }

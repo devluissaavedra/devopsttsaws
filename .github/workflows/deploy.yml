@@ -1,0 +1,47 @@
+name: 'Terraform Deploy'
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write # Necesario para OIDC
+  contents: read
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    steps:
+    # 1. Bajar el código
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # 2. Autenticarse en AWS usando el Rol (OIDC)
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # 3. Instalar Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    # 4. Terraform Init (Aquí se conecta al S3 y DynamoDB que creaste)
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform
+
+    # 5. Terraform Plan (Ver qué va a crear)
+    - name: Terraform Plan
+      run: terraform plan
+      working-directory: ./terraform
+
+    # 6. Terraform Apply (¡A construir!)
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+      working-directory: ./terraform

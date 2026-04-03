@@ -1,0 +1,19 @@
+# Carpeta de binarios y providers (lo más pesado)
+.terraform/
+
+# Archivos de estado (¡Súper importante por seguridad!)
+*.tfstate
+*.tfstate.*
+
+# Variables que pueden contener secretos
+*.tfvars
+*.tfvars.json
+
+# Archivos de log y temporales
+crash.log
+*.log
+
+# Archivos de respaldo de editores
+.vscode/
+.idea/
+.DS_Store

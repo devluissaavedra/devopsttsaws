@@ -1,8 +1,6 @@
 name: 'Terraform Deploy'
 
-on:
-  push:
-    branches: [ "main" ]
+on: workflow_dispatch:
 
 permissions:
   id-token: write # Necesario para OIDC

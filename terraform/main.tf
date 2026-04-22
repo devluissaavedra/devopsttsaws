@@ -152,3 +152,35 @@ output "dns_endpoint" {
   value       = aws_lb.main_alb.dns_name
   description = "URL del Balanceador de Carga"
 }
+
+# ---- CloudWatch
+resource "aws_cloudwatch_dashboard" "main" {
+  dashboard_name = "DevOps-TTS-Monitoring"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "metric"
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            [ "AWS/Polly", "ResponseTime", "Operation", "SynthesizeSpeech" ]
+          ]
+          period = 300
+          stat   = "Average"
+          region = "us-east-1"
+          title  = "Latencia de Polly"
+        }
+      },
+      {
+        type   = "text"
+        width  = 12
+        height = 6
+        properties = {
+          markdown = "# DevOps TTS Status\nMonitoreo básico de logs y latencia."
+        }
+      }
+    ]
+  })
+}

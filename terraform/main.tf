@@ -153,7 +153,6 @@ output "dns_endpoint" {
   description = "URL del Balanceador de Carga"
 }
 
-# ---- CloudWatch
 resource "aws_cloudwatch_dashboard" "main" {
   dashboard_name = "DevOps-TTS-Monitoring"
 
@@ -174,11 +173,22 @@ resource "aws_cloudwatch_dashboard" "main" {
         }
       },
       {
+        type   = "log"
+        width  = 24
+        height = 6
+        properties = {
+          region = "us-east-1"
+          query  = "SOURCE '/aws/devops-tts/backend' | fields @timestamp, @message | filter @message like /error/ or @message like /Error/ | sort @timestamp desc | limit 20"
+          title  = "Últimos Errores Detectados"
+          view   = "table"
+        }
+      },
+      {
         type   = "text"
         width  = 12
         height = 6
         properties = {
-          markdown = "# DevOps TTS Status\nMonitoreo básico de logs y latencia."
+          markdown = "# DevOps TTS Status\nMonitoreo de latencia y detección de errores en logs."
         }
       }
     ]
